@@ -62,15 +62,6 @@ def calculate_tt_metrics(original: np.ndarray, compressed_factors: list):
     tt_ratio = orig_bytes / tt_bytes if tt_bytes else float('inf')
     return orig_bytes, tt_bytes, tt_ratio
 
-def calculate_psnr(original: np.ndarray, reconstructed: np.ndarray):
-    return psnr_metric(original, reconstructed, data_range=1.0)
-
-def calculate_ssim_safe(original: np.ndarray, reconstructed: np.ndarray):
-    h, w, _ = original.shape
-    min_dim = min(h, w)
-    win_size = min(7, min_dim if min_dim % 2 == 1 else min_dim - 1)
-    return compare_ssim(original, reconstructed, channel_axis=2, win_size=win_size, data_range=1.0)
-
 def calculate_mse(original: np.ndarray, reconstructed: np.ndarray):
     return np.mean((original - reconstructed) ** 2)
 
@@ -89,6 +80,9 @@ def main():
 
         st.info("If you want sharp edges and fine textures, use small patches + higher rank (slower but better quality).")
         st.info("If you just need a quick, “good enough” thumbnail, try bigger patches + lower rank (faster and smaller, with more smoothing).")
+
+        st.success("The quantum-inspired algorithm uses Tensor Train decomposition to compress images.\
+                   Its strongest practical advantage is reducing the required memory usage (RAM) of an image")
 
 
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
@@ -125,12 +119,9 @@ def main():
         download_size = len(jpeg_bytes)
 
         # Compute metrics
-        psnr = calculate_psnr(img_array, recon_clipped)
-        ssim_val = calculate_ssim_safe(img_array, recon_clipped)
         mse_val = calculate_mse(img_array, recon_clipped)
         orig_bytes, tt_bytes, tt_ratio = calculate_tt_metrics(img_array, comp_factors)
         on_disk_ratio = orig_file_bytes / download_size if download_size else float('inf')
-        bpp = (download_size * 8) / (h * w)
         compression_gain = calculate_compression_gain(orig_file_bytes, download_size)
 
         with col2:
@@ -145,7 +136,7 @@ def main():
             st.metric("On-disk Compression Ratio (in Storage)", f"{on_disk_ratio:.1f}×")
 
         with met2:
-            st.metric("TT Storage Ratio (in Memory)", f"{tt_ratio:.1f}×")
+            st.metric("TT Storage Ratio (in-Memory/RAM)", f"{tt_ratio:.1f}×")
             st.metric("Compression Reduction", f"{compression_gain:.1f}%")
 
         st.download_button(
