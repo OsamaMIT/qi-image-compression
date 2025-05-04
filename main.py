@@ -72,6 +72,7 @@ def calculate_compression_gain(original_size, compressed_size):
 def main():
     st.set_page_config(page_title="Quantum Image Compressor", page_icon="🖼️")
     st.title("🖼️ Quantum-Inspired Image Compression")
+    st.caption("Primary advantage is reducing the **required memory usage (RAM)** of an image")
 
     with st.sidebar:
         st.title("Compression Settings")
